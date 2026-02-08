@@ -1,6 +1,8 @@
 import streamlit as st
 import pandas as pd
 import numpy as np
+import joblib
+import os
 
 import shap
 import matplotlib.pyplot as plt
@@ -11,11 +13,22 @@ from utils.shap_utils import build_shap_tools, transform_for_shap
 
 st.title("2️⃣ Simulateur — Prédiction consommation électrique via les données du DPE")
 
+defaults = load_defaults()
+
+st.write("✅ Page chargée. Prêt à charger le modèle…")
+
 # =========================================================
 # Chargement modèle & defaults
 # =========================================================
-model = load_model()
-defaults = load_defaults()
+with st.spinner("Chargement du modèle…"):
+    try:
+        model = load_model()   # <-- IMPORTANT: ici seulement
+        st.success("✅ Modèle chargé")
+    except Exception as e:
+        st.error("❌ Erreur au chargement du modèle")
+        st.exception(e)
+        st.stop()
+
 
 # SHAP tools (cache dans utils/shap_utils.py)
 preprocess, explainer, feature_names = build_shap_tools(model)
