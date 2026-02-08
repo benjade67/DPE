@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+.DS_Store
+
+# Data / modèles volumineux (à adapter selon ton choix)
+# data/
+# models/
+
+# Streamlit
+.streamlit/
+
+models/rf_dpe_corrige.joblib
+models/rf_dpe_corrige/
+
+# Notebook checkpoints
+.ipynb_checkpoints/
+
+# OS
+.DS_Store
+Thumbs.db
+
+.ipynb_checkpoints/Untitled-checkpoint.ipynb
