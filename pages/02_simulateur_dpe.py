@@ -31,7 +31,7 @@ with st.spinner("Chargement du modèle…"):
 
 
 # SHAP tools (cache dans utils/shap_utils.py)
-preprocess, explainer, feature_names = build_shap_tools(model)
+# preprocess, explainer, feature_names = build_shap_tools(model)
 
 
 # =========================================================
@@ -254,30 +254,30 @@ with st.expander("Voir les variables envoyées au modèle"):
 # =========================================================
 # SHAP local
 # =========================================================
-st.divider()
-st.subheader("Explication SHAP (locale) — pourquoi cette prédiction ?")
+# st.divider()
+# st.subheader("Explication SHAP (locale) — pourquoi cette prédiction ?")
 
-X_user_trans_df = transform_for_shap(preprocess, X_user, feature_names)
+# X_user_trans_df = transform_for_shap(preprocess, X_user, feature_names)
 
-shap_vals = explainer.shap_values(X_user_trans_df)
+# shap_vals = explainer.shap_values(X_user_trans_df)
 
-base_value = float(explainer.expected_value)
-pred_from_shap = base_value + float(shap_vals[0].sum())
+# base_value = float(explainer.expected_value)
+# pred_from_shap = base_value + float(shap_vals[0].sum())
 
 
 
-st.caption(
-    "Le graphique décompose la prédiction en contributions additives des variables. "
-    "Contribution positive = augmente la conso ; négative = diminue."
-)
+# st.caption(
+#     "Le graphique décompose la prédiction en contributions additives des variables. "
+#     "Contribution positive = augmente la conso ; négative = diminue."
+# )
 
-exp = shap.Explanation(
-    values=shap_vals[0],
-    base_values=base_value,
-    data=X_user_trans_df.iloc[0].values,
-    feature_names=X_user_trans_df.columns
-)
+# exp = shap.Explanation(
+#     values=shap_vals[0],
+#     base_values=base_value,
+#     data=X_user_trans_df.iloc[0].values,
+#     feature_names=X_user_trans_df.columns
+# )
 
-fig = plt.figure(figsize=(10, 6))
-shap.plots.waterfall(exp, max_display=15, show=False)
-st.pyplot(fig, clear_figure=True)
+# fig = plt.figure(figsize=(10, 6))
+# shap.plots.waterfall(exp, max_display=15, show=False)
+# st.pyplot(fig, clear_figure=True)

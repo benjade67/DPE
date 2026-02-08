@@ -13,6 +13,7 @@ __pycache__/
 
 models/rf_dpe_corrige.joblib
 models/rf_dpe_corrige/
+models/rf_dpe_corrige_compress.joblib
 
 # Notebook checkpoints
 .ipynb_checkpoints/
