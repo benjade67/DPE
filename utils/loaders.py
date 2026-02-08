@@ -12,11 +12,12 @@ MODEL_PATH = "models/rf_dpe_corrige.joblib"
 DEFAULTS_PATH = "models/defaults_simulateur.joblib"
 DEP_GEOJSON_PATH = "data/departements.geojson"
 DEP_GEOJSON_URL = "https://raw.githubusercontent.com/gregoiredavid/france-geojson/master/departements.geojson"
+MODEL_URL = "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true"
 
-MODEL_URL = st.secrets.get(
-    "MODEL_URL",
-    "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true",
-)
+# MODEL_URL = st.secrets.get(
+#     "MODEL_URL",
+#     "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true",
+# )
 
 @st.cache_data
 def load_df_corr(path: str = DATA_PATH) -> pd.DataFrame:
