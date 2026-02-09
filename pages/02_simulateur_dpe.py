@@ -6,11 +6,13 @@ import shap
 import matplotlib.pyplot as plt
 
 from utils.loaders import load_model, load_defaults
+# from utils.shap_utils import build_shap_tools, transform_for_shap
+
 
 st.title("2️⃣ Simulateur — Prédiction consommation électrique via les données du DPE")
 
 # =========================================================
-# Cache: modèle & defaults (pour éviter rechargements)
+# Cache: modèle & defaults
 # =========================================================
 @st.cache_resource(show_spinner=False)
 def get_model():
@@ -44,7 +46,6 @@ st.caption(
 def build_X_user(params: dict, defaults: dict) -> pd.DataFrame:
     mode = params["mode"]
 
-    # Avancé: on prend les sliders; Simple: on prend les defaults
     if mode == "Avancé":
         ubat = float(params["ubat"])
         dep_air = float(params["dep_air"])
@@ -94,7 +95,7 @@ def compute_prediction(model, defaults, params: dict):
     return {"X_user": X_user, "y_pred": y_pred, "ref": ref}
 
 # =========================================================
-# 1) Valeurs par défaut (une seule fois)
+# 1) Valeurs par défaut + calcul initial (au chargement)
 # =========================================================
 if "sim_params_applied" not in st.session_state:
     st.session_state["sim_params_applied"] = {
@@ -109,7 +110,7 @@ if "sim_params_applied" not in st.session_state:
         "type_ecs": "collectif",
         "type_chauffage": "collectif",
         "type_bat": "appartement",
-        # valeurs avancées par défaut (si mode Avancé activé)
+        # valeurs avancées par défaut (si mode Avancé)
         "ubat": 0.55,
         "dep_air": 48.7,
         "dep_baies": 31.5,
@@ -119,19 +120,34 @@ if "sim_params_applied" not in st.session_state:
         "dep_pb": 0.0,
         "dep_ph": 51.2,
     }
-    # Calcul initial (au chargement)
     with st.spinner("Calcul initial (valeurs par défaut)..."):
-        st.session_state["sim_result"] = compute_prediction(model, defaults, st.session_state["sim_params_applied"])
+        st.session_state["sim_result"] = compute_prediction(
+            model, defaults, st.session_state["sim_params_applied"]
+        )
 
 applied = st.session_state["sim_params_applied"]
 
 # =========================================================
-# 2) UI dans un formulaire => pas de recalcul avant "Appliquer"
+# 2) Mode hors form => affichage immédiat des champs avancés
+# =========================================================
+mode = st.radio(
+    "Mode de saisie",
+    ["Simple", "Avancé"],
+    horizontal=True,
+    index=0 if applied["mode"] == "Simple" else 1,
+)
+
+# On mémorise le mode immédiatement (sans recalcul)
+if mode != applied["mode"]:
+    st.session_state["sim_params_applied"] = {**applied, "mode": mode}
+    applied = st.session_state["sim_params_applied"]
+
+st.divider()
+
+# =========================================================
+# 3) Formulaire: inputs + bouton Appliquer
 # =========================================================
 with st.form("sim_form"):
-    mode = st.radio("Mode de saisie", ["Simple", "Avancé"], horizontal=True, index=0 if applied["mode"] == "Simple" else 1)
-    st.divider()
-
     st.subheader("Caractéristiques principales")
 
     c1, c2, c3, c4 = st.columns(4)
@@ -151,30 +167,63 @@ with st.form("sim_form"):
         )
     with c3:
         zones = ["H1a", "H1b", "H1c", "H2a", "H2b", "H2c", "H2d", "H3"]
-        zone = st.selectbox("Zone climatique", zones, index=zones.index(applied["zone"]) if applied["zone"] in zones else 1)
+        zone = st.selectbox(
+            "Zone climatique",
+            zones,
+            index=zones.index(applied["zone"]) if applied["zone"] in zones else 1,
+        )
     with c4:
         annee = st.slider("Année de construction", 1850, 2025, int(applied["annee"]))
 
     c5, c6, c7 = st.columns(3)
     with c5:
-        n_logements = st.number_input("Nombre de logements", min_value=1, max_value=5000, value=int(applied["n_logements"]), step=1)
+        n_logements = st.number_input(
+            "Nombre de logements",
+            min_value=1,
+            max_value=5000,
+            value=int(applied["n_logements"]),
+            step=1,
+        )
     with c6:
-        surface_totale = st.number_input("Surface totale (m²)", min_value=20, max_value=1_500_000, value=int(applied["surface_totale"]), step=10)
+        surface_totale = st.number_input(
+            "Surface totale (m²)",
+            min_value=20,
+            max_value=1_500_000,
+            value=int(applied["surface_totale"]),
+            step=10,
+        )
     with c7:
-        n_dpe = st.number_input("Nombre de DPE agrégés (n_dpe)", min_value=1, max_value=20000, value=int(applied["n_dpe"]), step=1)
+        n_dpe = st.number_input(
+            "Nombre de DPE agrégés (n_dpe)",
+            min_value=1,
+            max_value=20000,
+            value=int(applied["n_dpe"]),
+            step=1,
+        )
 
-    type_ecs = st.selectbox("Type d'installation ECS", ["individuel", "collectif"], index=0 if applied["type_ecs"] == "individuel" else 1)
+    type_ecs = st.selectbox(
+        "Type d'installation ECS",
+        ["individuel", "collectif"],
+        index=0 if applied["type_ecs"] == "individuel" else 1,
+    )
     type_chauffage_opts = ["individuel", "collectif", "mixte (collectif-individuel)"]
     type_chauffage = st.selectbox(
         "Type d'installation chauffage",
         type_chauffage_opts,
-        index=type_chauffage_opts.index(applied["type_chauffage"]) if applied["type_chauffage"] in type_chauffage_opts else 1,
+        index=type_chauffage_opts.index(applied["type_chauffage"])
+        if applied["type_chauffage"] in type_chauffage_opts else 1,
     )
     type_bat_opts = ["habitation", "appartement", "maison"]
-    type_bat = st.selectbox("Type de bâtiment", type_bat_opts, index=type_bat_opts.index(applied["type_bat"]) if applied["type_bat"] in type_bat_opts else 1)
+    type_bat = st.selectbox(
+        "Type de bâtiment",
+        type_bat_opts,
+        index=type_bat_opts.index(applied["type_bat"])
+        if applied["type_bat"] in type_bat_opts else 1,
+    )
 
     st.divider()
 
+    # Paramètres thermiques visibles immédiatement (mode hors form)
     if mode == "Avancé":
         st.subheader("Paramètres thermiques (avancé)")
 
@@ -198,7 +247,7 @@ with st.form("sim_form"):
         with b4:
             dep_ph = st.slider("Déperditions planchers hauts", 0.0, 200.0, float(applied["dep_ph"]), step=1.0)
     else:
-        # Valeurs placeholders (non utilisées en Simple)
+        # placeholders (non utilisés en Simple)
         ubat = applied["ubat"]
         dep_air = applied["dep_air"]
         dep_baies = applied["dep_baies"]
@@ -210,6 +259,9 @@ with st.form("sim_form"):
 
     submitted = st.form_submit_button("Appliquer")
 
+# =========================================================
+# 4) Appliquer => recalcul uniquement ici
+# =========================================================
 if submitted:
     new_params = {
         "mode": mode,
@@ -237,7 +289,7 @@ if submitted:
         st.session_state["sim_result"] = compute_prediction(model, defaults, new_params)
 
 # =========================================================
-# 3) Affichage du dernier résultat appliqué
+# 5) Affichage du dernier résultat appliqué
 # =========================================================
 res = st.session_state.get("sim_result")
 if res is None:
@@ -263,3 +315,10 @@ st.caption(
 
 with st.expander("Voir les variables envoyées au modèle"):
     st.dataframe(X_user, use_container_width=True)
+
+# =========================================================
+# SHAP local (optionnel)
+# =========================================================
+# st.divider()
+# st.subheader("Explication SHAP (locale) — pourquoi cette prédiction ?")
+# ... (inchangé, à réactiver si besoin)
