@@ -126,7 +126,7 @@ if "page1_filters_applied" not in st.session_state:
         "ecs": "Électrique",
         "zone": "Toutes",
         "yr": None,          # rempli ci-dessous selon les données
-        "ndpe_min": 3,
+        "ndpe_min": 1,
     }
 
     # bornes année depuis df (si dispo)
@@ -159,7 +159,7 @@ if "annee_construction" in df.columns and df["annee_construction"].notna().any()
     ymin = int(np.nanpercentile(df["annee_construction"], 1))
     ymax = int(np.nanpercentile(df["annee_construction"], 99))
 else:
-    ymin, ymax = 1900, 2025
+    ymin, ymax = 1800, 2025
 
 # bornes ndpe (sécurisé)
 ndpe_max = int(df["n_dpe"].max()) if "n_dpe" in df.columns and pd.notna(df["n_dpe"].max()) else 100
