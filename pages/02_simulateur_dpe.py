@@ -24,7 +24,7 @@ def get_defaults():
 
 defaults = get_defaults()
 
-st.write("✅ Page chargée. Prêt à charger le modèle…")
+# st.write("✅ Page chargée. Prêt à charger le modèle…")
 
 with st.spinner("Chargement du modèle…"):
     try:
