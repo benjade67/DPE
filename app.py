@@ -24,9 +24,9 @@ st.subheader("🧭 Pages disponibles")
 c1, c2 = st.columns(2)
 
 with c1:
-    st.markdown("### 1️⃣ Écart DPE / réel par étiquette")
+    st.markdown("### 1️⃣ Écart DPE / réel par classe calculée")
     st.write(
-        "Visualise la distribution de l'écart **Enedis − DPE** par étiquette énergétique (A–G). "
+        "Visualise la distribution de l'écart **Enedis − DPE** par classe calculée depuis la consommation DPE (A–G). "
         "Utile pour constater les écarts systématiques, notamment en tout-électrique."
     )
     st.page_link("pages/01_ecart_dpe_reel.py", label="➡️ Ouvrir l’analyse des écarts", icon="📊")

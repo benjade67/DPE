@@ -2,9 +2,6 @@ import streamlit as st
 import pandas as pd
 import numpy as np
 
-import shap
-import matplotlib.pyplot as plt
-
 from utils.loaders import load_model, load_defaults
 # from utils.shap_utils import build_shap_tools, transform_for_shap
 
@@ -201,10 +198,12 @@ with st.form("sim_form"):
             step=1,
         )
 
+    type_ecs_opts = ["individuel", "collectif", "mixte (collectif-individuel)"]
     type_ecs = st.selectbox(
         "Type d'installation ECS",
-        ["individuel", "collectif"],
-        index=0 if applied["type_ecs"] == "individuel" else 1,
+        type_ecs_opts,
+        index=type_ecs_opts.index(applied["type_ecs"])
+        if applied["type_ecs"] in type_ecs_opts else 0,
     )
     type_chauffage_opts = ["individuel", "collectif", "mixte (collectif-individuel)"]
     type_chauffage = st.selectbox(
@@ -213,7 +212,7 @@ with st.form("sim_form"):
         index=type_chauffage_opts.index(applied["type_chauffage"])
         if applied["type_chauffage"] in type_chauffage_opts else 1,
     )
-    type_bat_opts = ["habitation", "appartement", "maison"]
+    type_bat_opts = ["appartement", "immeuble", "maison"]
     type_bat = st.selectbox(
         "Type de bâtiment",
         type_bat_opts,

@@ -3,16 +3,15 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 
-from utils.loaders import load_df_corr, load_dep_geojson
+from utils.loaders import load_df_corr
 
 # ==========================
 # Paramètres colonnes (adapte si nécessaire)
 # ==========================
 COL_REAL = "conso_m2_reelle"
 COL_DPE  = "conso_5_usages_par_m2_ef_moy"
-COL_DEP  = "code_departement"
 
-st.title("1️⃣ Écart consommation par étiquette énergétique : ENEDIS réelle − DPE conventionnelle")
+st.title("1️⃣ Écart consommation par classe calculée : ENEDIS réelle − DPE conventionnelle")
 
 # ==========================
 # Helpers
@@ -72,7 +71,7 @@ def compute_result(df: pd.DataFrame, filters: dict):
     COL_ETIQ = "etiquette_dpe_calc"
     tmp = dff.dropna(subset=[COL_ETIQ, "ecart_dpe_reel"]).copy()
     if tmp.empty:
-        return {"warning": "Aucune donnée exploitable pour l’analyse par étiquette."}
+        return {"warning": "Aucune donnée exploitable pour l’analyse par classe calculée."}
 
     lo2, hi2 = np.percentile(tmp["ecart_dpe_reel"], [1, 99])
     tmp["ecart_clip"] = tmp["ecart_dpe_reel"].clip(lo2, hi2)
@@ -95,17 +94,17 @@ def compute_result(df: pd.DataFrame, filters: dict):
         category_orders={"etiquette_label": order_labels},
         points=False,
         labels={
-            "etiquette_label": "Étiquette DPE (volume après filtres)",
+            "etiquette_label": "Classe calculée (volume après filtres)",
             "ecart_clip": "Enedis − DPE (kWh/m²/an)",
         },
-        title="Distribution de l’écart par étiquette DPE",
+        title="Distribution de l’écart par classe calculée depuis la consommation DPE",
     )
     fig_box.update_layout(height=420, margin={"r": 0, "t": 50, "l": 0, "b": 0})
 
     return {
         "fig": fig_box,
         "info": (
-            "Plus l’étiquette DPE est mauvaise, plus la consommation conventionnelle du DPE "
+            "Plus la classe calculée depuis la consommation DPE est mauvaise, plus la consommation conventionnelle du DPE "
             "tend à surestimer la consommation électrique réellement observée."
         ),
         "n": len(tmp),
