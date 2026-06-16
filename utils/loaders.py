@@ -8,7 +8,8 @@ import joblib
 import streamlit as st
 
 DATA_PATH = "data/df_corr.parquet"
-MODEL_PATH = "models/rf_dpe_corrige.joblib"
+MODEL_PATH = "models/simulateur_light.joblib"
+REMOTE_MODEL_PATH = "models/rf_dpe_corrige.joblib"
 DEFAULTS_PATH = "models/defaults_simulateur.joblib"
 DEFAULT_MODEL_URL = "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true"
 MODEL_DOWNLOAD_TIMEOUT = int(os.environ.get("MODEL_DOWNLOAD_TIMEOUT", "120"))
@@ -49,8 +50,12 @@ def _download_if_missing(url: str, path: str):
 
 
 @st.cache_resource
-def load_model(path: str = MODEL_PATH):
-    _download_if_missing(MODEL_URL, path)
+def load_model(path: str = MODEL_PATH, allow_download: bool = False):
+    if not os.path.exists(path):
+        if not allow_download:
+            raise FileNotFoundError(f"Modèle local introuvable : {path}")
+        path = REMOTE_MODEL_PATH
+        _download_if_missing(MODEL_URL, path)
     return joblib.load(path)
 
 

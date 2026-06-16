@@ -1,22 +1,25 @@
-\# DPE × Enedis — Streamlit
+# DPE x Enedis - Streamlit
 
+Application Streamlit de demonstration autour des ecarts entre consommations DPE conventionnelles et consommations electriques observees.
 
+## Pages
 
-Deux pages :
+- Ecart consommation : visualisation de l'ecart Enedis - DPE conventionnelle par classe calculee.
+- Simulateur : prediction de consommation electrique corrigee a partir de variables DPE.
 
-\- Écart consommation (Enedis − DPE conventionnelle) par étiquette énergétique
+## Modele du simulateur
 
-\- Simulateur : prédiction de consommation électrique à partir des variables DPE
+Le simulateur utilise par defaut un modele local leger :
 
+```text
+models/simulateur_light.joblib
+```
 
+Ce modele est embarque dans le depot pour eviter un telechargement long ou fragile au demarrage de l'application en production.
 
-\## Lancer en local
+## Lancer en local
 
 ```bash
-
 pip install -r requirements.txt
-
 streamlit run app.py
-
-
-
+```
