@@ -21,21 +21,12 @@ def get_defaults():
 
 defaults = get_defaults()
 
-# st.write("✅ Page chargée. Prêt à charger le modèle…")
-
-with st.spinner("Chargement du modèle…"):
-    try:
-        model = get_model()
-        st.success("✅ Modèle chargé")
-    except Exception as e:
-        st.error("❌ Erreur au chargement du modèle")
-        st.exception(e)
-        st.stop()
-
 st.caption(
     "Le simulateur estime une consommation électrique attendue (kWh/m²/an) à partir des caractéristiques décrites par le DPE, "
     "corrigée à partir des consommations réelles observées."
 )
+
+st.info("Le modèle est chargé uniquement au lancement du calcul pour accélérer l’ouverture de la page.")
 
 # =========================================================
 # Helpers
@@ -92,7 +83,7 @@ def compute_prediction(model, defaults, params: dict):
     return {"X_user": X_user, "y_pred": y_pred, "ref": ref}
 
 # =========================================================
-# 1) Valeurs par défaut + calcul initial (au chargement)
+# 1) Valeurs par défaut
 # =========================================================
 if "sim_params_applied" not in st.session_state:
     st.session_state["sim_params_applied"] = {
@@ -117,10 +108,6 @@ if "sim_params_applied" not in st.session_state:
         "dep_pb": 0.0,
         "dep_ph": 51.2,
     }
-    with st.spinner("Calcul initial (valeurs par défaut)..."):
-        st.session_state["sim_result"] = compute_prediction(
-            model, defaults, st.session_state["sim_params_applied"]
-        )
 
 applied = st.session_state["sim_params_applied"]
 
@@ -256,7 +243,7 @@ with st.form("sim_form"):
         dep_pb = applied["dep_pb"]
         dep_ph = applied["dep_ph"]
 
-    submitted = st.form_submit_button("Appliquer")
+    submitted = st.form_submit_button("Calculer")
 
 # =========================================================
 # 4) Appliquer => recalcul uniquement ici
@@ -284,15 +271,25 @@ if submitted:
         "dep_ph": dep_ph,
     }
     st.session_state["sim_params_applied"] = new_params
-    with st.spinner("Calcul en cours..."):
-        st.session_state["sim_result"] = compute_prediction(model, defaults, new_params)
+    with st.spinner("Chargement du modèle puis calcul en cours..."):
+        try:
+            model = get_model()
+            st.session_state["sim_result"] = compute_prediction(model, defaults, new_params)
+        except Exception as e:
+            st.error("Impossible de charger le modèle de prédiction.")
+            st.caption(
+                "En production, vérifie que l'application a accès à l'URL du modèle "
+                "ou configure MODEL_URL dans les secrets Streamlit."
+            )
+            st.exception(e)
+            st.stop()
 
 # =========================================================
 # 5) Affichage du dernier résultat appliqué
 # =========================================================
 res = st.session_state.get("sim_result")
 if res is None:
-    st.info("Aucun résultat en mémoire.")
+    st.info("Renseigne les caractéristiques puis lance le calcul pour obtenir une estimation.")
     st.stop()
 
 y_pred = res["y_pred"]

@@ -1,5 +1,6 @@
 # utils/loaders.py
 import os
+import shutil
 import urllib.request
 import numpy as np
 import pandas as pd
@@ -9,12 +10,18 @@ import streamlit as st
 DATA_PATH = "data/df_corr.parquet"
 MODEL_PATH = "models/rf_dpe_corrige.joblib"
 DEFAULTS_PATH = "models/defaults_simulateur.joblib"
-MODEL_URL = "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true"
+DEFAULT_MODEL_URL = "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true"
+MODEL_DOWNLOAD_TIMEOUT = int(os.environ.get("MODEL_DOWNLOAD_TIMEOUT", "120"))
 
-# MODEL_URL = st.secrets.get(
-#     "MODEL_URL",
-#     "https://huggingface.co/DataBenFr/rf_dpe_corrige/resolve/main/rf_dpe_corrige.joblib?download=true",
-# )
+
+def _get_secret(name: str, default: str) -> str:
+    try:
+        return st.secrets.get(name, default)
+    except Exception:
+        return default
+
+
+MODEL_URL = _get_secret("MODEL_URL", os.environ.get("MODEL_URL", DEFAULT_MODEL_URL))
 
 @st.cache_data
 def load_df_corr(path: str = DATA_PATH) -> pd.DataFrame:
@@ -29,7 +36,16 @@ def load_defaults(path: str = DEFAULTS_PATH) -> dict:
 def _download_if_missing(url: str, path: str):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if not os.path.exists(path):
-        urllib.request.urlretrieve(url, path)
+        tmp_path = f"{path}.tmp"
+        try:
+            with urllib.request.urlopen(url, timeout=MODEL_DOWNLOAD_TIMEOUT) as response:
+                with open(tmp_path, "wb") as tmp_file:
+                    shutil.copyfileobj(response, tmp_file)
+            os.replace(tmp_path, path)
+        except Exception:
+            if os.path.exists(tmp_path):
+                os.remove(tmp_path)
+            raise
 
 
 @st.cache_resource
