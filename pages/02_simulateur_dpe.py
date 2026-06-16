@@ -21,12 +21,19 @@ def get_defaults():
 
 defaults = get_defaults()
 
+with st.spinner("Chargement du modèle local..."):
+    try:
+        model = get_model()
+    except Exception as e:
+        st.error("Impossible de charger le modèle local de prédiction.")
+        st.caption("Vérifie que models/simulateur_light.joblib est bien présent dans le dépôt.")
+        st.exception(e)
+        st.stop()
+
 st.caption(
     "Le simulateur estime une consommation électrique attendue (kWh/m²/an) à partir des caractéristiques décrites par le DPE, "
     "corrigée à partir des consommations réelles observées."
 )
-
-st.info("Le modèle est chargé uniquement au lancement du calcul pour accélérer l’ouverture de la page.")
 
 # =========================================================
 # Helpers
@@ -83,7 +90,7 @@ def compute_prediction(model, defaults, params: dict):
     return {"X_user": X_user, "y_pred": y_pred, "ref": ref}
 
 # =========================================================
-# 1) Valeurs par défaut
+# 1) Valeurs par défaut + calcul initial
 # =========================================================
 if "sim_params_applied" not in st.session_state:
     st.session_state["sim_params_applied"] = {
@@ -108,6 +115,9 @@ if "sim_params_applied" not in st.session_state:
         "dep_pb": 0.0,
         "dep_ph": 51.2,
     }
+    st.session_state["sim_result"] = compute_prediction(
+        model, defaults, st.session_state["sim_params_applied"]
+    )
 
 applied = st.session_state["sim_params_applied"]
 
@@ -271,18 +281,8 @@ if submitted:
         "dep_ph": dep_ph,
     }
     st.session_state["sim_params_applied"] = new_params
-    with st.spinner("Chargement du modèle puis calcul en cours..."):
-        try:
-            model = get_model()
-            st.session_state["sim_result"] = compute_prediction(model, defaults, new_params)
-        except Exception as e:
-            st.error("Impossible de charger le modèle de prédiction.")
-            st.caption(
-                "En production, vérifie que l'application a accès à l'URL du modèle "
-                "ou configure MODEL_URL dans les secrets Streamlit."
-            )
-            st.exception(e)
-            st.stop()
+    with st.spinner("Calcul en cours..."):
+        st.session_state["sim_result"] = compute_prediction(model, defaults, new_params)
 
 # =========================================================
 # 5) Affichage du dernier résultat appliqué
